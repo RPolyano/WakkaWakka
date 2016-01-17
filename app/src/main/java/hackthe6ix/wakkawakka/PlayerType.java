@@ -11,4 +11,20 @@ public final class PlayerType {
     public static final int SUPERFOOD = 3;
 
 
+    public static String getTypeString(int type) {
+        switch (type)
+        {
+            case WAKKMAN:
+                return "WakkMan";
+            case GHOST:
+                return "Ghost";
+            case FOOD:
+                return "Food";
+            case SUPERFOOD:
+                return "Super Food";
+            case INVALID:
+                return "Invalid";
+        }
+        return "Unknown";
+    }
 }

@@ -27,9 +27,9 @@ public class WakkaWebClient {
     private static final String FMT_CREATE_NAME_DEVID = "http://%s/player/create?name=%s&dev_id=%s";
     private static final String FMT_LIST_AROUND_X_Y_RADIUS = "http://%s/players/list/around?x=%f&y=%f&radius=%f";
     private static final String FMT_NOTIFY = "http://%s/notifications/send";
-    private static final String FMT_UPDATE_X_Y_ACCURACY_NAME = "http://%s/players/update?x=%f&y=%f&accuracy=%f&name=%4s";
+    private static final String FMT_UPDATE_X_Y_ACCURACY_NAME = "http://%s/player/update?x=%f&y=%f&accuracy=%f&dev_id=%4s";
     private static final String TAG_UPDATE_REQUEST = "UPDATE_REQ";
-    private static  final String HOST = "localhost:3000";
+    private static  final String HOST = "stormy-forest-3492.herokuapp.com";
 
     RequestQueue queue;
 
@@ -45,8 +45,8 @@ public class WakkaWebClient {
     }
 
     public void Create(String name, String devid, Response.Listener<JSONObject> resp, Response.ErrorListener errorListener) {
-        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST,
-                String.format(FMT_CREATE_NAME_DEVID, HOST, name, devid), null, resp, errorListener);
+        String url = String.format(FMT_CREATE_NAME_DEVID, HOST, name, devid);
+        JsonObjectRequest req = new JsonObjectRequest(Request.Method.POST, url, null, resp, errorListener);
 
         queue.add(req);
     }

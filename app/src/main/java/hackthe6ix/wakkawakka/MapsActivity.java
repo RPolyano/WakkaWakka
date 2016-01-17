@@ -19,12 +19,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import hackthe6ix.wakkawakka.callbacks.PlayerCreatedCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 import hackthe6ix.wakkawakka.eventbus.EventBus;
 import hackthe6ix.wakkawakka.services.LocationUpdaterService;
 import hackthe6ix.wakkawakka.services.PlayerUpdateService;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, PositionUpdateCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, PositionUpdateCallback, PlayerCreatedCallback {
 
     private GoogleMap mMap;
     private boolean mapNeedsToRefocus;
@@ -75,16 +76,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         mapNeedsToRefocus = true;
 
-        Player.localplayer = new Player(true, Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
 
-        EventBus.POSITION_UPDATE_EVENTBUS.register(Player.localplayer);
         EventBus.POSITION_UPDATE_EVENTBUS.register(this);
+        EventBus.PLAYER_CREATE_EVENTBUS.register(this);
 
-        Intent locationUpdater = new Intent(this, LocationUpdaterService.class);
-        startService(locationUpdater);
 
-        Intent intent = new Intent(this, PlayerUpdateService.class);
-        startService(intent);
     }
 
     /**
@@ -99,9 +95,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        Marker mark = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("You"));
-        mark.setVisible(true);
-        Player.localplayer.marker = mark;
+        Intent locationUpdater = new Intent(this, LocationUpdaterService.class);
+        startService(locationUpdater);
+
+        Intent intent = new Intent(this, PlayerUpdateService.class);
+        startService(intent);
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
@@ -121,21 +119,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ev, 17f));
             mapNeedsToRefocus = false;
         }
-        if (Player.localplayer.accuracyCircle == null) {
+    }
+
+    public void MaintainPlayerMarkers(Player plr)
+    {
+        if (plr.marker == null)
+        {
+            Marker mark = mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("You"));
+            mark.setVisible(true);
+            plr.marker = mark;
+        }
+
+        if (plr.accuracyCircle == null) {
             CircleOptions opts = new CircleOptions();
 
-            opts.center(ev);
-            opts.fillColor(Color.argb(100, 255, 0, 0));
+            opts.center(new LatLng(plr.latitude, plr.longitude));
+            opts.fillColor(Color.argb(plr.local ? 100 : 25, plr.local ? 255 : 0, 0, plr.local ? 0 : 255));
             opts.zIndex(-1f);
             opts.strokeColor(Color.argb(200, 255, 0, 0));
             opts.strokeWidth(1.5f);
 
-            Player.localplayer.accuracyCircle = mMap.addCircle(opts);
+            plr.accuracyCircle = mMap.addCircle(opts);
         }
 
-        Player.localplayer.accuracyCircle.setCenter(ev);
-        Player.localplayer.accuracyCircle.setRadius(Player.localplayer.accuracy);
 
+    }
+
+    @Override
+    public void OnPlayerCreated(Player plr) {
+        if (mMap != null)
+        {
+            MaintainPlayerMarkers(plr);
+        }
 
     }
 }

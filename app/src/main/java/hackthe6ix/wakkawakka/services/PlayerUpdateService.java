@@ -20,6 +20,7 @@ import java.util.TimerTask;
 import hackthe6ix.wakkawakka.Game;
 import hackthe6ix.wakkawakka.Player;
 import hackthe6ix.wakkawakka.WakkaWebClient;
+import hackthe6ix.wakkawakka.eventbus.EventBus;
 
 public class PlayerUpdateService extends Service {
 
@@ -27,7 +28,8 @@ public class PlayerUpdateService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        timer.scheduleAtFixedRate(new mainTask(), 0, Game.PLAYER_UPDATE_RATE);
+        updateOpRunner.sendEmptyMessage(0);
+        timer.scheduleAtFixedRate(new mainTask(), 500, Game.PLAYER_UPDATE_RATE);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -71,12 +73,21 @@ public class PlayerUpdateService extends Service {
                                     {
                                         plr = Game.getInstance().players.get(devid);
                                     }
+                                    else if (Player.localplayer.devid.equals(devid))
+                                    {
+                                        plr = Player.localplayer;
+                                    }
                                     else
                                     {
                                         plr = new Player(false, devid);
+                                        Game.getInstance().players.put(devid, plr);
                                     }
 
+                                    EventBus.PLAYER_CREATE_EVENTBUS.broadcast(plr);
+
                                     plr.Update(response.getJSONObject(i));
+
+
 
                                 } catch (JSONException e) {
                                     e.printStackTrace();

@@ -33,7 +33,7 @@ public class Player implements PositionUpdateCallback {
     public Circle accuracyCircle;
 
     private int prevType;
-    private final boolean local;
+    public final boolean local;
 
     public Player(boolean local, String devid)
     {
@@ -46,37 +46,66 @@ public class Player implements PositionUpdateCallback {
     public void OnPositionUpdate(LatLng ev) {
         latitude = ev.latitude;
         longitude = ev.longitude;
-        marker.setVisible(true);
-        marker.setPosition(ev);
-        marker.setSnippet("Accurate to " + (int) accuracy + " meters");
+
     }
 
 
     public void Update(JSONObject jsonObject) {
         try {
             name = jsonObject.getString("username");
+
             if (!local)
             {
                 JSONObject location = jsonObject.getJSONObject("location");
                 latitude = Double.parseDouble(location.getString("y"));
                 longitude = Double.parseDouble(location.getString("x"));
                 accuracy = Double.parseDouble(location.getString("Acc"));
+
             }
-            type = Integer.parseInt(jsonObject.getString("type"));
+
             score = jsonObject.getInt("points");
             invulnerable = jsonObject.getInt("invulnerable");
             cooldown = jsonObject.getInt("cooldown");
+            type = Integer.parseInt(jsonObject.getString("type"));
 
-            if (type != prevType)
+            if (type != prevType && marker != null && accuracyCircle != null)
             {
-                Bitmap bmp = BitmapFactory.decodeResource(Game.getAppContext().getResources(), R.drawable.wakkman);
-                double aspect = bmp.getWidth()/(double)bmp.getHeight();
-                marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, 100, (int) (100 / aspect), false)));
                 prevType = type;
+                UpdateMarker();
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void UpdateMarker() {
+        marker.setTitle(PlayerType.getTypeString(type) + " " + (local ? "You" : name));
+        int drawableID = 0;
+        switch (type)
+        {
+            case PlayerType.WAKKMAN:
+                drawableID = R.drawable.wakkman;
+                break;
+            case PlayerType.FOOD:
+                drawableID = R.drawable.wakkman;
+                break;
+            case PlayerType.GHOST:
+                drawableID = R.drawable.ghost;
+                break;
+            case PlayerType.SUPERFOOD:
+                drawableID = R.drawable.ghost;
+                break;
+            case PlayerType.INVALID:
+                return;
+        }
+        Bitmap bmp = BitmapFactory.decodeResource(Game.getAppContext().getResources(), drawableID);
+        double aspect = bmp.getWidth()/(double)bmp.getHeight();
+        marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, 100, (int) (100 / aspect), false)));
+        marker.setVisible(true);
+        marker.setPosition(new LatLng(latitude, longitude));
+        marker.setSnippet("Accurate to " + (int) accuracy + " meters");
+        accuracyCircle.setCenter(new LatLng(latitude, longitude));
+        accuracyCircle.setRadius(Player.localplayer.accuracy);
     }
 }
