@@ -26,6 +26,7 @@ import com.android.volley.VolleyError;
 
 import org.json.JSONObject;
 
+import hackthe6ix.wakkawakka.callbacks.NotificationEvent;
 import hackthe6ix.wakkawakka.eventbus.EventBus;
 import hackthe6ix.wakkawakka.services.NotificationService;
 import hackthe6ix.wakkawakka.services.PlayerUpdateService;
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, NotificationService.class);
         startService(intent);
 
-        
+
 
         final SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
