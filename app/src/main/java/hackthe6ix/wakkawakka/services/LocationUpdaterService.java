@@ -1,10 +1,9 @@
-package hackthe6ix.wakkawakka;
+package hackthe6ix.wakkawakka.services;
 
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -18,10 +17,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import hackthe6ix.wakkawakka.Player;
+import hackthe6ix.wakkawakka.WakkaWebClient;
+import hackthe6ix.wakkawakka.eventbus.EventBus;
 
-public class UpdaterService extends Service implements Response.ErrorListener,
+public class LocationUpdaterService extends Service implements Response.ErrorListener,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
     public final static String SERVER = "localhost:3000";
@@ -32,7 +32,7 @@ public class UpdaterService extends Service implements Response.ErrorListener,
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
 
-    public UpdaterService() {
+    public LocationUpdaterService() {
 
 
     }
@@ -40,7 +40,7 @@ public class UpdaterService extends Service implements Response.ErrorListener,
     @Override
     public int onStartCommand(Intent intent, int flags, int startID)
     {
-        mWebClient = new WakkaWebClient(this, this, SERVER);
+        mWebClient = WakkaWebClient.getInstance();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
@@ -101,6 +101,7 @@ public class UpdaterService extends Service implements Response.ErrorListener,
         mLastLocation = location;
         Player.localplayer.accuracy = location.getAccuracy();
         EventBus.POSITION_UPDATE_EVENTBUS.broadcast(new LatLng(location.getLatitude(), location.getLongitude()));
+
         mWebClient.Update(new LatLng(Player.localplayer.latitude, Player.localplayer.longitude),
                 Player.localplayer.accuracy, new Response.Listener<String>() {
                     @Override
@@ -108,7 +109,9 @@ public class UpdaterService extends Service implements Response.ErrorListener,
                         Toast.makeText(getApplicationContext(), "Updated location "
                                 + System.currentTimeMillis() + ":" + response, Toast.LENGTH_SHORT).show();
                     }
-                });
+                }, this);
     }
+
+
 
 }
