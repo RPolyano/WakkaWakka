@@ -1,14 +1,23 @@
 package hackthe6ix.wakkawakka;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,13 +28,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import hackthe6ix.wakkawakka.callbacks.NotificationEvent;
 import hackthe6ix.wakkawakka.callbacks.PlayerCreatedCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 import hackthe6ix.wakkawakka.eventbus.EventBus;
 import hackthe6ix.wakkawakka.services.LocationUpdaterService;
 import hackthe6ix.wakkawakka.services.PlayerUpdateService;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, PositionUpdateCallback, PlayerCreatedCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+        PositionUpdateCallback, PlayerCreatedCallback {
 
     private GoogleMap mMap;
     private boolean mapNeedsToRefocus;
@@ -80,7 +91,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         EventBus.POSITION_UPDATE_EVENTBUS.register(this);
         EventBus.PLAYER_CREATE_EVENTBUS.register(this);
 
-
     }
 
     /**
@@ -110,7 +120,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStop() {
-
+        EventBus.POSITION_UPDATE_EVENTBUS.unregister(this);
+        EventBus.PLAYER_CREATE_EVENTBUS.unregister(this);
         super.onStop();
     }
 
@@ -154,4 +165,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
+
 }

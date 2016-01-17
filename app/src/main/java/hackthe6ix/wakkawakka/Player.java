@@ -1,7 +1,13 @@
 package hackthe6ix.wakkawakka;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,8 +21,10 @@ import com.google.android.gms.maps.model.Marker;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import hackthe6ix.wakkawakka.callbacks.NotificationEvent;
 import hackthe6ix.wakkawakka.callbacks.PlayerUpdateRecievedCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
+import hackthe6ix.wakkawakka.eventbus.EventBus;
 
 /**
  * Created by uba19_000 on 1/15/2016.
@@ -40,8 +48,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     private int prevType;
     public final boolean local;
 
-    public Player(boolean local, String devid)
-    {
+    public Player(boolean local, String devid) {
         this.local = local;
         this.devid = devid;
         prevType = -1;
@@ -51,7 +58,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     public void OnPositionUpdate(LatLng ev) {
         latitude = ev.latitude;
         longitude = ev.longitude;
-
+        //Notify(PlayerType.getDrawableID(0), "Hello!");
     }
 
 
@@ -59,8 +66,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
         try {
             name = jsonObject.getString("username");
 
-            if (!local)
-            {
+            if (!local) {
                 JSONObject location = jsonObject.getJSONObject("location");
                 latitude = Double.parseDouble(location.getString("y"));
                 longitude = Double.parseDouble(location.getString("x"));
@@ -73,8 +79,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
             cooldown = jsonObject.getInt("cooldown");
             type = Integer.parseInt(jsonObject.getString("type"));
 
-            if (type != prevType && marker != null && accuracyCircle != null)
-            {
+            if (type != prevType && marker != null && accuracyCircle != null) {
                 prevType = type;
                 UpdateMarker();
             }
@@ -86,26 +91,9 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
 
     public void UpdateMarker() {
         marker.setTitle(PlayerType.getTypeString(type) + " " + (local ? "You" : name));
-        int drawableID = 0;
-        switch (type)
-        {
-            case PlayerType.WAKKMAN:
-                drawableID = R.drawable.wakkman;
-                break;
-            case PlayerType.FOOD:
-                drawableID = R.drawable.wakkman;
-                break;
-            case PlayerType.GHOST:
-                drawableID = R.drawable.ghost;
-                break;
-            case PlayerType.SUPERFOOD:
-                drawableID = R.drawable.ghost;
-                break;
-            case PlayerType.INVALID:
-                return;
-        }
+        int drawableID = PlayerType.getDrawableID(type);
         Bitmap bmp = BitmapFactory.decodeResource(Game.getAppContext().getResources(), drawableID);
-        double aspect = bmp.getWidth()/(double)bmp.getHeight();
+        double aspect = bmp.getWidth() / (double) bmp.getHeight();
         marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, 100, (int) (100 / aspect), false)));
         marker.setVisible(true);
         marker.setPosition(new LatLng(latitude, longitude));
@@ -118,27 +106,26 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     @Override
     public void OnPlayersUpdated(Integer num) {
         boolean meInvoln = System.currentTimeMillis() - invulnerable < Game.INVULN_TIME;
-        if (System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME)
-        {
+        if (System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME) {
             return;
         }
 
         //Interactions check
-        for (final Player plr : Game.getInstance().players.values())
-        {
-            if (System.currentTimeMillis() - plr.cooldown < Game.COOLDOWN_TIME)
-            {
+        for (final Player plr : Game.getInstance().players.values()) {
+            if (System.currentTimeMillis() - plr.cooldown < Game.COOLDOWN_TIME) {
                 continue;
             }
             boolean targetInvuln = System.currentTimeMillis() - plr.invulnerable < Game.INVULN_TIME;
             double dist = LatLonDist(plr.latitude, latitude, plr.longitude, longitude);
-            if (dist < Game.INTERACTION_RANGE && PlayerType.CanInteract(type, meInvoln, plr.type, targetInvuln))
-            {
+            if (dist < Game.INTERACTION_RANGE && PlayerType.CanInteract(type, meInvoln, plr.type, targetInvuln)) {
                 WakkaWebClient.getInstance().Interact(plr.devid, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         //Notify Interact success
-
+                        EventBus.NOTIFICATION_EVENTBUS.broadcast(
+                                new NotificationEvent.NotificationInfo(type,
+                                        "You ate " + plr.name + " the " +
+                                                PlayerType.getTypeString(plr.type) + "!"));
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -147,10 +134,11 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                         Toast.makeText(Game.getAppContext(), "A network error occured - could not interact.", Toast.LENGTH_SHORT);
                     }
                 });
-            }
-            else if (dist < Game.THREAT_RANGE)
-            {
-
+            } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, meInvoln)) {
+                //Notify of threat
+                //Notify(plr.type, plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!");
+                EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(plr.type,
+                        plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!"));
             }
         }
     }

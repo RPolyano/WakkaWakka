@@ -41,15 +41,11 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
-
-        </activity>
-
+            android:label="@string/title_activity_maps"></activity>
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -59,12 +55,14 @@
 
         <service
             android:name=".services.PlayerUpdateService"
-            android:enabled="true"/>
-
+            android:enabled="true" />
         <service
             android:name=".services.LocationUpdaterService"
             android:enabled="true" />
-
+        <service
+            android:name=".services.NotificationService"
+            android:enabled="true"
+            android:exported="false"></service>
     </application>
 
 </manifest>

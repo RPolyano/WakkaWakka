@@ -93,7 +93,10 @@ public class PlayerUpdateService extends Service {
                                     e.printStackTrace();
                                 }
                             }
+                            //EventBus.PLAYERS_UPDATED_EVENTBUS.broadcast(response.length());
                         }
+
+
                     }, errorListener);
         }
     };

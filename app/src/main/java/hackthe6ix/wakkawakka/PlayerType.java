@@ -44,4 +44,20 @@ public final class PlayerType {
         }
         return false;
     }
+
+    public static int getDrawableID(int type) {
+        switch (type) {
+            case PlayerType.WAKKMAN:
+                return R.drawable.wakkman;
+            case PlayerType.FOOD:
+                return R.drawable.food;
+            case PlayerType.GHOST:
+                return R.drawable.ghost;
+            case PlayerType.SUPERFOOD:
+                return R.drawable.superfood;
+            case PlayerType.INVALID:
+                return 0;
+        }
+        return 0;
+    }
 }

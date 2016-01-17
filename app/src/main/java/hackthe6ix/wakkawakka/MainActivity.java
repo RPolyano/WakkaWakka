@@ -27,6 +27,8 @@ import com.android.volley.VolleyError;
 import org.json.JSONObject;
 
 import hackthe6ix.wakkawakka.eventbus.EventBus;
+import hackthe6ix.wakkawakka.services.NotificationService;
+import hackthe6ix.wakkawakka.services.PlayerUpdateService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent intent = new Intent(this, NotificationService.class);
+        startService(intent);
+
+        
 
         final SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
 
@@ -48,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         {
             txtName.setText(sharedPref.getString("NAME", ""), TextView.BufferType.EDITABLE);
         }
+
 
 
         final Activity me = this;
