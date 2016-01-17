@@ -73,7 +73,6 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                 latitude = Double.parseDouble(location.getString("y"));
                 longitude = Double.parseDouble(location.getString("x"));
                 accuracy = Double.parseDouble(location.getString("Acc"));
-
             }
 
             score = jsonObject.getInt("points");
@@ -96,30 +95,40 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
         int drawableID = PlayerType.getDrawableID(type);
         Bitmap bmp = BitmapFactory.decodeResource(Game.getAppContext().getResources(), drawableID);
         double aspect = bmp.getWidth() / (double) bmp.getHeight();
-        marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, 100, (int) (100 / aspect), false)));
+        marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, (int) (100 * aspect), 100, false)));
+        marker.setAlpha(isCooldown() ? 0.2f : 1f);
         marker.setVisible(true);
         marker.setPosition(new LatLng(latitude, longitude));
-        marker.setSnippet("Accurate to " + (int) accuracy + " meters");
+        marker.setSnippet("Score: " + score);
         accuracyCircle.setCenter(new LatLng(latitude, longitude));
         accuracyCircle.setRadius(Player.localplayer.accuracy);
     }
 
+    public boolean isInvoln()
+    {
+        return System.currentTimeMillis() - invulnerable < Game.INVULN_TIME;
+    }
+
+    public boolean isCooldown()
+    {
+        return System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME;
+    }
 
     @Override
     public void OnPlayersUpdated(Integer num) {
-        boolean meInvoln = System.currentTimeMillis() - invulnerable < Game.INVULN_TIME;
+
         if (System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME) {
             return;
         }
 
         //Interactions check
         for (final Player plr : Game.getInstance().players.values()) {
-            if (System.currentTimeMillis() - plr.cooldown < Game.COOLDOWN_TIME) {
+            if (plr.isCooldown()) {
                 continue;
             }
-            boolean targetInvuln = System.currentTimeMillis() - plr.invulnerable < Game.INVULN_TIME;
+            boolean targetInvuln = plr.isInvoln();
             double dist = LatLonDist(plr.latitude, latitude, plr.longitude, longitude);
-            if (dist < Game.INTERACTION_RANGE && PlayerType.CanInteract(type, meInvoln, plr.type, targetInvuln)) {
+            if (dist < Game.INTERACTION_RANGE && PlayerType.CanInteract(type, isInvoln(), plr.type, targetInvuln)) {
                 WakkaWebClient.getInstance().Interact(plr.devid, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -137,12 +146,16 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                         Toast.makeText(Game.getAppContext(), "A network error occured - could not interact.", Toast.LENGTH_SHORT);
                     }
                 });
-            } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, meInvoln) && plr.presenceAck != 1) {
+            } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, isInvoln())) {
                 //Notify of threat
                 //Notify(plr.type, plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!");
-                plr.presenceAck = 1;
-                EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(plr.type,
-                        plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!"));
+                if (plr.presenceAck != 1)
+                {
+                    plr.presenceAck = 1;
+                    EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(plr.type,
+                            plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!"));
+                }
+
             }
             else
             {
