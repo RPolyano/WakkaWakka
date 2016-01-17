@@ -47,11 +47,13 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
 
     private int prevType;
     public final boolean local;
+    private int presenceAck;
 
     public Player(boolean local, String devid) {
         this.local = local;
         this.devid = devid;
         prevType = -1;
+        presenceAck = 0;
     }
 
     @Override
@@ -122,6 +124,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                     @Override
                     public void onResponse(String response) {
                         //Notify Interact success
+
                         EventBus.NOTIFICATION_EVENTBUS.broadcast(
                                 new NotificationEvent.NotificationInfo(type,
                                         "You ate " + plr.name + " the " +
@@ -134,11 +137,16 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                         Toast.makeText(Game.getAppContext(), "A network error occured - could not interact.", Toast.LENGTH_SHORT);
                     }
                 });
-            } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, meInvoln)) {
+            } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, meInvoln) && plr.presenceAck != 1) {
                 //Notify of threat
                 //Notify(plr.type, plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!");
+                plr.presenceAck = 1;
                 EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(plr.type,
                         plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!"));
+            }
+            else
+            {
+                plr.presenceAck = 0;
             }
         }
     }
