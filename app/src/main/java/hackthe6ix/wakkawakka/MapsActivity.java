@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 import hackthe6ix.wakkawakka.eventbus.EventBus;
 import hackthe6ix.wakkawakka.services.LocationUpdaterService;
+import hackthe6ix.wakkawakka.services.PlayerUpdateService;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, PositionUpdateCallback {
 
@@ -73,13 +75,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         mapNeedsToRefocus = true;
 
-        Player.localplayer = new Player(true);
+        Player.localplayer = new Player(true, Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
 
-        EventBus.PLAYER_UPDATE_EVENTBUS.register(Player.localplayer);
         EventBus.POSITION_UPDATE_EVENTBUS.register(Player.localplayer);
         EventBus.POSITION_UPDATE_EVENTBUS.register(this);
 
-        Intent intent = new Intent(this, LocationUpdaterService.class);
+        Intent locationUpdater = new Intent(this, LocationUpdaterService.class);
+        startService(locationUpdater);
+
+        Intent intent = new Intent(this, PlayerUpdateService.class);
         startService(intent);
     }
 

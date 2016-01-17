@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-import hackthe6ix.wakkawakka.callbacks.PlayerUpdateCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 
 /**
@@ -18,7 +17,6 @@ public class EventBus<T, G> {
     final Class<T> typeParameterClass;
 
     public static EventBus<PositionUpdateCallback, LatLng> POSITION_UPDATE_EVENTBUS = new EventBus<>(PositionUpdateCallback.class);
-    public static EventBus<PlayerUpdateCallback, LatLng> PLAYER_UPDATE_EVENTBUS = new EventBus<>(PlayerUpdateCallback.class);
 
     private ArrayList<T> listeners = new ArrayList<>();
 

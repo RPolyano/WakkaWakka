@@ -17,6 +17,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
+import hackthe6ix.wakkawakka.Game;
 import hackthe6ix.wakkawakka.Player;
 import hackthe6ix.wakkawakka.WakkaWebClient;
 import hackthe6ix.wakkawakka.eventbus.EventBus;
@@ -38,8 +39,7 @@ public class LocationUpdaterService extends Service implements Response.ErrorLis
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startID)
-    {
+    public int onStartCommand(Intent intent, int flags, int startID) {
         mWebClient = WakkaWebClient.getInstance();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -49,8 +49,8 @@ public class LocationUpdaterService extends Service implements Response.ErrorLis
                 .build();
 
         mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(20000);
-        mLocationRequest.setFastestInterval(10000);
+        mLocationRequest.setInterval(Game.LOCATION_UPDATE_RATE);
+        mLocationRequest.setFastestInterval(Game.LOCATION_UPDATE_RATE / 2);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mGoogleApiClient.connect();
         return super.onStartCommand(intent, flags, startID);
@@ -103,15 +103,14 @@ public class LocationUpdaterService extends Service implements Response.ErrorLis
         EventBus.POSITION_UPDATE_EVENTBUS.broadcast(new LatLng(location.getLatitude(), location.getLongitude()));
 
         mWebClient.Update(new LatLng(Player.localplayer.latitude, Player.localplayer.longitude),
-                Player.localplayer.accuracy, new Response.Listener<String>() {
+                Player.localplayer.accuracy, Player.localplayer.devid, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Toast.makeText(getApplicationContext(), "Updated location "
-                                + System.currentTimeMillis() + ":" + response, Toast.LENGTH_SHORT).show();
+                                + System.currentTimeMillis() + " : " + response, Toast.LENGTH_SHORT).show();
                     }
                 }, this);
     }
-
 
 
 }

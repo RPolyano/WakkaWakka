@@ -4,6 +4,8 @@ import android.app.Application;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by uba19_000 on 1/16/2016.
@@ -18,6 +20,8 @@ public class Game extends Application {
     private static Context context;
 
     public static final int RELEVANCE_RANGE = 3000;
+    public static final int LOCATION_UPDATE_RATE = 20000;
+    public static final int PLAYER_UPDATE_RATE = 20000;
 
     public void onCreate() {
         super.onCreate();
@@ -29,11 +33,15 @@ public class Game extends Application {
         return Game.context;
     }
 
-    public ArrayList<Player> players;
+    public Map<String, Player> players;
+
+    public boolean isPlayerRegistered(String devid)
+    {
+        return players.containsKey(devid);
+    }
 
     public Game() {
-        players = new ArrayList<>();
-
+        players = new HashMap<>();
     }
 
 }
