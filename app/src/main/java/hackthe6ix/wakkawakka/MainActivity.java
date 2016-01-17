@@ -63,11 +63,19 @@ public class MainActivity extends AppCompatActivity {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                txtName.setText(txtName.getText().toString().trim(), TextView.BufferType.EDITABLE);
+
                 if (txtName.getText().toString().isEmpty())
                 {
                     Toast.makeText(me, "Please enter a nickname!", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                else if (txtName.getText().toString().toLowerCase().equals("you"))
+                {
+                    Toast.makeText(me, "Please don't be an ass and mislead people!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Player.localplayer.name = txtName.getText().toString();
                 sharedPref.edit().putString("NAME", Player.localplayer.name).commit();
                 WakkaWebClient.getInstance().Create(

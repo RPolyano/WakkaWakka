@@ -41,7 +41,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     public String devid;
     public long invulnerable;
     public long cooldown;
-
+    public long prevCooldown;
     public Marker marker;
     public Circle accuracyCircle;
 
@@ -53,6 +53,7 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
         this.local = local;
         this.devid = devid;
         prevType = -1;
+        prevCooldown = -1;
         presenceAck = 0;
     }
 
@@ -67,23 +68,31 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     public void Update(JSONObject jsonObject) {
         try {
             name = jsonObject.getString("username");
+            cooldown = jsonObject.getLong("cooldown");
 
             if (!local) {
                 JSONObject location = jsonObject.getJSONObject("location");
                 latitude = Double.parseDouble(location.getString("y"));
                 longitude = Double.parseDouble(location.getString("x"));
                 accuracy = Double.parseDouble(location.getString("Acc"));
+            } else if (prevCooldown != cooldown && prevCooldown != -1) {
+
+                EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(
+                        type, "You've been eaten!"
+                ));
             }
 
             score = jsonObject.getInt("points");
-            invulnerable = jsonObject.getInt("invulnerable");
-            cooldown = jsonObject.getInt("cooldown");
+            invulnerable = jsonObject.getLong("invulnerable");
+
             type = Integer.parseInt(jsonObject.getString("type"));
 
-            if (type != prevType && marker != null && accuracyCircle != null) {
-                prevType = type;
+            if (marker != null && accuracyCircle != null) {
                 UpdateMarker();
             }
+
+            prevType = type;
+            prevCooldown = cooldown;
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -91,33 +100,38 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
     }
 
     public void UpdateMarker() {
-        marker.setTitle(PlayerType.getTypeString(type) + " " + (local ? "You" : name));
+        marker.setTitle((isInvoln() ? "Powered up " : "") + PlayerType.getTypeString(type) + " " + (local ? "You" : name));
         int drawableID = PlayerType.getDrawableID(type);
+
         Bitmap bmp = BitmapFactory.decodeResource(Game.getAppContext().getResources(), drawableID);
+
+        if (bmp == null)
+        {
+            return;
+        }
+
         double aspect = bmp.getWidth() / (double) bmp.getHeight();
         marker.setIcon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(bmp, (int) (100 * aspect), 100, false)));
-        marker.setAlpha(isCooldown() ? 0.2f : 1f);
+        marker.setAlpha(isCooldown() ? 0.5f : 1f);
         marker.setVisible(true);
         marker.setPosition(new LatLng(latitude, longitude));
         marker.setSnippet("Score: " + score);
         accuracyCircle.setCenter(new LatLng(latitude, longitude));
-        accuracyCircle.setRadius(Player.localplayer.accuracy);
+        accuracyCircle.setRadius(accuracy);
     }
 
-    public boolean isInvoln()
-    {
+    public boolean isInvoln() {
         return System.currentTimeMillis() - invulnerable < Game.INVULN_TIME;
     }
 
-    public boolean isCooldown()
-    {
+    public boolean isCooldown() {
         return System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME;
     }
 
     @Override
     public void OnPlayersUpdated(Integer num) {
 
-        if (System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME) {
+        if (isCooldown()) {
             return;
         }
 
@@ -133,11 +147,13 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
                     @Override
                     public void onResponse(String response) {
                         //Notify Interact success
+                        if (!response.equals("COOLDOWN")) {
+                            EventBus.NOTIFICATION_EVENTBUS.broadcast(
+                                    new NotificationEvent.NotificationInfo(type,
+                                            "You ate " + plr.name + " the " +
+                                                    PlayerType.getTypeString(plr.type) + "!"));
+                        }
 
-                        EventBus.NOTIFICATION_EVENTBUS.broadcast(
-                                new NotificationEvent.NotificationInfo(type,
-                                        "You ate " + plr.name + " the " +
-                                                PlayerType.getTypeString(plr.type) + "!"));
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -149,16 +165,13 @@ public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallb
             } else if (dist < Game.THREAT_RANGE && PlayerType.CanInteract(plr.type, targetInvuln, type, isInvoln())) {
                 //Notify of threat
                 //Notify(plr.type, plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!");
-                if (plr.presenceAck != 1)
-                {
+                if (plr.presenceAck != 1) {
                     plr.presenceAck = 1;
                     EventBus.NOTIFICATION_EVENTBUS.broadcast(new NotificationEvent.NotificationInfo(plr.type,
                             plr.name + " the " + PlayerType.getTypeString(plr.type) + " is nearby, and can eat you!"));
                 }
 
-            }
-            else
-            {
+            } else {
                 plr.presenceAck = 0;
             }
         }

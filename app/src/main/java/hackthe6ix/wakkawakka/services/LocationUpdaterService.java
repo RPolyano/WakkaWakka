@@ -98,6 +98,11 @@ public class LocationUpdaterService extends Service implements Response.ErrorLis
 
     @Override
     public void onLocationChanged(Location location) {
+        if (location == null)
+        {
+            Log.e("onLocationChanged", "Null location");
+            return;
+        }
         mLastLocation = location;
         Player.localplayer.accuracy = location.getAccuracy();
         EventBus.POSITION_UPDATE_EVENTBUS.broadcast(new LatLng(location.getLatitude(), location.getLongitude()));
