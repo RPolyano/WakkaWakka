@@ -28,6 +28,8 @@ public class WakkaWebClient {
     private static final String FMT_LIST_AROUND_X_Y_RADIUS = "http://%s/players/list/around?x=%f&y=%f&radius=%f";
     private static final String FMT_NOTIFY = "http://%s/notifications/send";
     private static final String FMT_UPDATE_X_Y_ACCURACY_NAME = "http://%s/player/update?x=%f&y=%f&accuracy=%f&dev_id=%4s";
+    private static final String FMT_INTERACT_DEVID_OPPONENTID = "http://%s/player/interact?name=%s&opponent=%s";
+
     private static final String TAG_UPDATE_REQUEST = "UPDATE_REQ";
     private static  final String HOST = "stormy-forest-3492.herokuapp.com";
 
@@ -71,23 +73,14 @@ public class WakkaWebClient {
         queue.add(req);
     }
 
-    public void Notify(final String[] deviceIds, final int messageType, Response.Listener<String> resp, Response.ErrorListener errorListener)
+    public void Interact(String opponent, Response.Listener<String> resp, Response.ErrorListener errorListener)
     {
         StringRequest req = new StringRequest(Request.Method.POST,
-                String.format(FMT_NOTIFY, HOST),
+                String.format(FMT_INTERACT_DEVID_OPPONENTID, HOST, Player.localplayer.devid, opponent),
                 resp, errorListener
-        ) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-                Map<String, String> params = new HashMap<>();
-                params.put("sender", Player.localplayer.devid);
-                params.put("targets", makeJSONArray(deviceIds));
-                params.put("type", String.valueOf(messageType));
-                return params;
-            }
-        };
+        );
         req.setShouldCache(false);
-
+        queue.add(req);
     }
 
     private String makeJSONArray(String[] strings) {

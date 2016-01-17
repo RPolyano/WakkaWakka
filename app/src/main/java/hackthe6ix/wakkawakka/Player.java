@@ -2,7 +2,11 @@ package hackthe6ix.wakkawakka;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
+import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
@@ -11,12 +15,13 @@ import com.google.android.gms.maps.model.Marker;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import hackthe6ix.wakkawakka.callbacks.PlayerUpdateRecievedCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 
 /**
  * Created by uba19_000 on 1/15/2016.
  */
-public class Player implements PositionUpdateCallback {
+public class Player implements PositionUpdateCallback, PlayerUpdateRecievedCallback {
     public static Player localplayer;
     public double longitude;
     public double latitude;
@@ -107,5 +112,64 @@ public class Player implements PositionUpdateCallback {
         marker.setSnippet("Accurate to " + (int) accuracy + " meters");
         accuracyCircle.setCenter(new LatLng(latitude, longitude));
         accuracyCircle.setRadius(Player.localplayer.accuracy);
+    }
+
+
+    @Override
+    public void OnPlayersUpdated(Integer num) {
+        boolean meInvoln = System.currentTimeMillis() - invulnerable < Game.INVULN_TIME;
+        if (System.currentTimeMillis() - cooldown < Game.COOLDOWN_TIME)
+        {
+            return;
+        }
+
+        //Interactions check
+        for (final Player plr : Game.getInstance().players.values())
+        {
+            if (System.currentTimeMillis() - plr.cooldown < Game.COOLDOWN_TIME)
+            {
+                continue;
+            }
+            boolean targetInvuln = System.currentTimeMillis() - plr.invulnerable < Game.INVULN_TIME;
+            double dist = LatLonDist(plr.latitude, latitude, plr.longitude, longitude);
+            if (dist < Game.INTERACTION_RANGE && PlayerType.CanInteract(type, meInvoln, plr.type, targetInvuln))
+            {
+                WakkaWebClient.getInstance().Interact(plr.devid, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //Notify Interact success
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("VolleyError", "Could not interact with " + plr.devid);
+                        Toast.makeText(Game.getAppContext(), "A network error occured - could not interact.", Toast.LENGTH_SHORT);
+                    }
+                });
+            }
+            else if (dist < Game.THREAT_RANGE)
+            {
+
+            }
+        }
+    }
+
+    //find distance between coords
+    public static double LatLonDist(double lat1, double lat2, double lon1, double lon2) {
+        double R = 6371000; // metres
+        double Lat1 = lat1 * Math.PI / 180;
+        double Lat2 = lat2 * Math.PI / 180;
+        double deltalat = (lat2 - lat1) * Math.PI / 180;
+        double deltaAlpha = (lon2 - lon1) * Math.PI / 180;
+
+        double a = Math.sin(deltalat / 2) * Math.sin(deltalat / 2) +
+                Math.cos(Lat1) * Math.cos(Lat2) *
+                        Math.sin(deltaAlpha / 2) * Math.sin(deltaAlpha / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double d = R * c;
+        return d;
     }
 }

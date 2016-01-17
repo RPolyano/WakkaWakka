@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
         Player.localplayer = new Player(true, Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
         EventBus.POSITION_UPDATE_EVENTBUS.register(Player.localplayer);
+        EventBus.PLAYERS_UPDATED_EVENTBUS.register(Player.localplayer);
 
         Button btnPlay = (Button) findViewById(R.id.btnPlay);
         final EditText txtName = (EditText) findViewById(R.id.txtName);

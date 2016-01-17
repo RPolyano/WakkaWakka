@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import hackthe6ix.wakkawakka.Player;
 import hackthe6ix.wakkawakka.callbacks.PlayerCreatedCallback;
+import hackthe6ix.wakkawakka.callbacks.PlayerUpdateRecievedCallback;
 import hackthe6ix.wakkawakka.callbacks.PositionUpdateCallback;
 
 /**
@@ -20,6 +21,7 @@ public class EventBus<T, G> {
 
     public static EventBus<PositionUpdateCallback, LatLng> POSITION_UPDATE_EVENTBUS = new EventBus<>(PositionUpdateCallback.class);
     public static EventBus<PlayerCreatedCallback, Player> PLAYER_CREATE_EVENTBUS = new EventBus<>(PlayerCreatedCallback.class);
+    public static EventBus<PlayerUpdateRecievedCallback, Integer> PLAYERS_UPDATED_EVENTBUS = new EventBus<>(PlayerUpdateRecievedCallback.class);
 
     private ArrayList<T> listeners = new ArrayList<>();
 

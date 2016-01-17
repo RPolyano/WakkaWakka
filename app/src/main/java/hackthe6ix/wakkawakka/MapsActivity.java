@@ -95,6 +95,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
         Intent locationUpdater = new Intent(this, LocationUpdaterService.class);
         startService(locationUpdater);
 

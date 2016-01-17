@@ -54,7 +54,7 @@ public class PlayerUpdateService extends Service {
         }
     };
 
-    private final static Handler updateOpRunner = new Handler()
+    private final Handler updateOpRunner = new Handler()
     {
         @Override
         public void handleMessage(Message msg)

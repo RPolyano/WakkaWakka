@@ -27,4 +27,21 @@ public final class PlayerType {
         }
         return "Unknown";
     }
+
+    public static boolean CanInteract(int actorType, boolean actorInvoln, int targetType, boolean targetInvoln) {
+        switch (actorType)
+        {
+            case WAKKMAN:
+                return targetType == FOOD || targetType == SUPERFOOD || (actorInvoln && targetType == GHOST);
+            case GHOST:
+                return targetType == WAKKMAN && !targetInvoln;
+            case FOOD:
+                return false;
+            case SUPERFOOD:
+                return false;
+            case INVALID:
+                return false;
+        }
+        return false;
+    }
 }

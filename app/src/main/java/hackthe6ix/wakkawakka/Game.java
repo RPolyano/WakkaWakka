@@ -19,6 +19,10 @@ public class Game extends Application {
 
     private static Context context;
 
+    public static final double INVULN_TIME = 3.6 * Math.pow(10, 6);
+    public static final double COOLDOWN_TIME = 1.8 * Math.pow(10, 6);
+    public static final int INTERACTION_RANGE = 10;
+    public static final int THREAT_RANGE = 10;
     public static final int RELEVANCE_RANGE = 3000;
     public static final int LOCATION_UPDATE_RATE = 20000;
     public static final int PLAYER_UPDATE_RATE = 20000;
@@ -43,5 +47,7 @@ public class Game extends Application {
     public Game() {
         players = new HashMap<>();
     }
+
+
 
 }
